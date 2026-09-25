@@ -449,7 +449,12 @@
       <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
   </div>
-  <iframe id="docFrame" title="מסמך"></iframe>
+  <iframe id="docFrame" title="מסמך" style="display:none"></iframe>
+  <div id="docPages" style="flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#525659;padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:10px"></div>
+  <div style="position:absolute;bottom:calc(16px + env(safe-area-inset-bottom));left:16px;display:flex;gap:8px">
+    <button class="burger" id="docZoomOut" aria-label="הקטנה" style="font-size:22px;color:#2F3E4A">−</button>
+    <button class="burger" id="docZoomIn" aria-label="הגדלה" style="font-size:22px;color:#2F3E4A">+</button>
+  </div>
 </div>
 
 <div id="moveBg"></div>
@@ -1142,25 +1147,59 @@ function dataUriToBlobUrl(uri){
   }catch(e){ return null; }
 }
 let docUrl = null;
+let pdfjsP = null, docZoom = 1, docJob = 0;
+function loadPdfJs(){
+  if(pdfjsP) return pdfjsP;
+  pdfjsP = new Promise((res,rej)=>{
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload = ()=>{ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; res(window.pdfjsLib); };
+    s.onerror = rej; document.head.appendChild(s);
+  });
+  return pdfjsP;
+}
+function applyDocZoom(){
+  document.querySelectorAll("#docPages canvas").forEach(c=>{ c.style.width = Math.round(docZoom*100)+"%"; c.style.maxWidth = docZoom>1 ? "none" : "900px"; });
+  document.getElementById("docPages").style.alignItems = docZoom>1 ? "flex-start" : "center";
+}
 function openDoc(uri, name){
   if(!uri) return;
-  const v = document.getElementById("docView"), fr = document.getElementById("docFrame");
-  fr.src = "about:blank";
+  const v = document.getElementById("docView"), box = document.getElementById("docPages");
+  const job = ++docJob; docZoom = 1;
+  box.innerHTML = '<div style="color:#fff;font-size:14px;padding:40px">טוען…</div>';
   v.classList.add("on");
   document.body.style.overflow = "hidden";
-  const show = href => { fr.src = href; };
-  if(/^data:/.test(uri)){ const u = dataUriToBlobUrl(uri); if(u){ docUrl = u; show(u); return; } }
-  let framed = false; try{ framed = window.self !== window.top; }catch(e){ framed = true; }
-  if(!framed){ show(new URL(uri, location.href).href); return; }
-  fetch(uri).then(r=>{ if(!r.ok) throw 0; return r.blob(); })
-    .then(b=>{ if(docUrl) URL.revokeObjectURL(docUrl); docUrl = URL.createObjectURL(new Blob([b], {type:"application/pdf"})); show(docUrl); })
-    .catch(()=>show(new URL(uri, location.href).href));
+  let src = uri;
+  if(/^data:/.test(uri)){ try{ const b64 = uri.split(",")[1]; const bin = atob(b64); const u8 = new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i); src = {data:u8}; }catch(e){} }
+  else src = {url: new URL(uri, location.href).href};
+  loadPdfJs().then(lib=>lib.getDocument(src).promise).then(async pdf=>{
+    if(job!==docJob) return;
+    box.innerHTML = "";
+    const w = Math.min(box.clientWidth - 16, 900);
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    for(let n=1; n<=pdf.numPages; n++){
+      if(job!==docJob) return;
+      const page = await pdf.getPage(n);
+      const vp1 = page.getViewport({scale:1});
+      const vp = page.getViewport({scale: (w/vp1.width)*dpr*1.5});
+      const c = document.createElement("canvas");
+      c.width = vp.width; c.height = vp.height;
+      c.style.cssText = "display:block;width:100%;max-width:900px;height:auto;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35);flex-shrink:0";
+      box.appendChild(c);
+      applyDocZoom();
+      await page.render({canvasContext:c.getContext("2d"), viewport:vp}).promise;
+    }
+  }).catch(()=>{
+    if(job!==docJob) return;
+    box.innerHTML = '<div style="color:#fff;font-size:14px;padding:40px;text-align:center">לא ניתן להציג את המסמך.<br><a style="color:#fff" href="'+uri+'" target="_blank" rel="noopener">פתיחה בחלון חדש</a></div>';
+  });
 }
 function closeDoc(){
   const v = document.getElementById("docView");
   if(!v) return;
   v.classList.remove("on");
   document.getElementById("docFrame").src = "about:blank";
+  docJob++; document.getElementById("docPages").innerHTML = "";
   document.body.style.overflow = "";
   if(docUrl){ URL.revokeObjectURL(docUrl); docUrl = null; }
 }
@@ -2270,6 +2309,8 @@ document.getElementById("imgView").addEventListener("click", e=>{ if(e.target.id
   im.addEventListener("click", e=>e.stopPropagation());
 })();
 document.getElementById("docHome").addEventListener("click", closeDoc);
+document.getElementById("docZoomIn").addEventListener("click", ()=>{ docZoom=Math.min(3, docZoom+0.5); applyDocZoom(); });
+document.getElementById("docZoomOut").addEventListener("click", ()=>{ docZoom=Math.max(1, docZoom-0.5); applyDocZoom(); });
 document.getElementById("confirmNo").addEventListener("click", closeConfirm);
 document.getElementById("confirmBg").addEventListener("click", closeConfirm);
 document.getElementById("confirmYes").addEventListener("click", ()=>{
