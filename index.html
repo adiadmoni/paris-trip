@@ -331,7 +331,7 @@
   #imgView{position:fixed;inset:0;z-index:5000;background:rgba(12,16,22,.94);display:none;
     flex-direction:column;align-items:center;justify-content:center;padding:70px 14px 30px;gap:12px}
   #imgView.on{display:flex}
-  #imgView img{max-width:100%;max-height:calc(100% - 40px);object-fit:contain;border-radius:12px}
+  #imgView img{max-width:100%;max-height:calc(100% - 40px);object-fit:contain;border-radius:12px;touch-action:none;transform-origin:center center;will-change:transform;user-select:none;-webkit-user-drag:none}
   #imgView #imgCap{color:#fff;font-size:14px;text-align:center}
   #imgView #imgClose{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px}
   img[data-zoom]{cursor:zoom-in}
@@ -507,13 +507,13 @@ const PASSPORTS_PDF = "passports.pdf";
 const DISNEY_MAP_PDF = "disney-map.pdf";
 const DISNEY_MAP_URL = "https://drive.google.com/file/d/1-vGVnvuiVEUbJe9uw9QmAbw6svq02VhT/view?usp=sharing";
 const HERO_DEFAULT = "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&h=560&q=70";
-const HERO_DISNEY  = "img/pasted-1790005504400-0.jpg";
-const HERO_DISNEY2 = "img/pasted-1790005590005-0.jpg";
-const HERO_DISNEY3 = "img/pasted-1790006290271-0.jpg";
-const HERO_ARC = "img/pasted-1790006818506-0.jpg";
-const HERO_PSG = "img/pasted-1790006562709-0.jpg";
-const HERO_EIFFEL = "img/pasted-1790006673881-0.jpg";
-const HERO_LOUVRE = "img/pasted-1790006739915-0.jpg";
+const HERO_DISNEY  = "pasted-1790005504400-0.png";
+const HERO_DISNEY2 = "pasted-1790005590005-0.png";
+const HERO_DISNEY3 = "pasted-1790006290271-0.png";
+const HERO_ARC = "pasted-1790006818506-0.png";
+const HERO_PSG = "pasted-1790006562709-0.png";
+const HERO_EIFFEL = "pasted-1790006673881-0.png";
+const HERO_LOUVRE = "pasted-1790006739915-0.png";
 const HERO_BY_DATE = {
   "2026-09-29": HERO_ARC,
   "2026-09-30": HERO_LOUVRE,
@@ -522,12 +522,12 @@ const HERO_BY_DATE = {
   "2026-10-03": HERO_DISNEY,
   "2026-10-04": HERO_DISNEY2,
   "2026-10-05": HERO_DISNEY3,
-  "2026-10-06": "img/pasted-1790005984149-0.jpg"
+  "2026-10-06": "pasted-1790005984149-0.png"
 };
 
 /* ---------- 2. אחסון ---------- */
 const KEY = "paris-trip-v2";
-var SCHEDULE_VERSION = 41;   // העלאת המספר מחליפה את הלו"ז השמור בלו"ז שבקוד
+var SCHEDULE_VERSION = 42;   // העלאת המספר מחליפה את הלו"ז השמור בלו"ז שבקוד
 const LEGACY = ["paris-trip-v10","paris-trip-v9","paris-trip-v8","paris-trip-v7","paris-trip-v6",
                 "paris-trip-v5","paris-trip-v4","paris-trip-v3","paris-trip-v1"];
 
@@ -551,7 +551,7 @@ const INITIAL_TRIP = {
      price:null, currency:"EUR", status:"estimated", type:"תחבורה",
      transport:"יציאה רגלית לכיוון Arc de Triomphe.", notes:"זמן הליכה: כ-15-20 דקות."},
     {id:"d30b", date:"2026-09-30", time:"10:00", name:"שער הניצחון + שאנז אליזה",
-     placeImg:"img/pasted-1790327380158-0.jpg", placeAlt:"Arc de Triomphe",
+     placeImg:"pasted-1790327380158-0.png", placeAlt:"Arc de Triomphe",
      address:"Place Charles de Gaulle, 75008 Paris", lat:48.8738, lng:2.2950,
      price:0, currency:"EUR", status:"known", type:"פעילות",
      openingHours:"10:00-10:45 · כ-45 דקות",
@@ -561,17 +561,17 @@ const INITIAL_TRIP = {
      price:null, currency:"EUR", status:"estimated", type:"תחבורה",
      openingHours:"10:45-11:00",
      transport:"הליכה קצרה לתחנת האוטובוס התיירותי (Champs-Élysées / Arc de Triomphe).", notes:"זמן הליכה: כ-5-10 דקות."},
-    {id:"a3", date:"2026-09-30", time:"11:00", placeImg:"img/pasted-1790327400025-0.jpg", placeAlt:"Tootbus Paris",
+    {id:"a3", date:"2026-09-30", time:"11:00", placeImg:"pasted-1790327400025-0.png", placeAlt:"Tootbus Paris",
      name:"Tootbus – Champs-Élysées · Concorde · Opéra · Louvre · Notre-Dame · Orsay · Invalides",
      price:142, currency:"EUR", status:"known", type:"פעילות",
      officialWebsite:LINKS.tootbus, appUrl:LINKS.tootbusApp,
      openingHours:"11:00-13:00 · כ-2 שעות",
-     routeImg:"img/pasted-1790324739988-0.jpg",
+     routeImg:"pasted-1790324739988-0.png",
      freeText:"מסלול Blue Route - 10 תחנות, סיבוב מלא כשעתיים:\n\n1. Opéra - Grands Magasins\n2. Musée du Louvre\n3. Notre Dame\n4. Panthéon - Luxembourg\n5. Musée d'Orsay\n6. Concorde\n7. Arc - Champs Elysées\n8. Trocadéro\n9. Tour Eiffel\n10. Pont Alexandre III - Invalides\n\n★ לרדת בתחנה 9 (Tour Eiffel) לקראת סוף הסיבוב.\nאפשר לעלות ולרדת ללא הגבלה, והכרטיס בתוקף 24 שעות מהשימוש הראשון.\nיש ערוץ אודיו לילדים באנגלית ובצרפתית.",
      address:"Avenue des Champs-Élysées, 75008 Paris", lat:48.8720, lng:2.2990,
      notes:"€141-142 אוטובוס בלבד · €186 כולל שיט. מחיר נבדק.\nנסיעה באוטובוס התיירותי דרך האתרים המרכזיים של פריז.\n\nאתרים מרכזיים במסלול:\nChamps-Élysées\nPlace de la Concorde\nOpéra\nLouvre\nNotre-Dame\nMusée d'Orsay\nInvalides"},
     {id:"d30g", date:"2026-09-30", time:"13:00", name:"★ מועדף: Louvre / Tuileries Stop",
-     placeImg:"img/pasted-1790327408512-0.jpg", placeAlt:"Louvre",
+     placeImg:"pasted-1790327408512-0.png", placeAlt:"Louvre",
      address:"Jardin des Tuileries, 75001 Paris", lat:48.8625, lng:2.3310,
      price:null, currency:"EUR", status:"estimated", type:"פעילות",
      openingHours:"13:00-14:00 · כ-60 דקות",
@@ -581,7 +581,7 @@ const INITIAL_TRIP = {
      openingHours:"14:00-16:45",
      notes:"חזרה לאוטובוס והמשך המסלול מערבה.\n\nאתרים מרכזיים:\nConcorde\nChamps-Élysées\nArc de Triomphe\nTrocadéro"},
     {id:"d30i", date:"2026-09-30", time:"16:45", name:"Trocadéro",
-     placeImg:"img/pasted-1790327439267-0.jpg", placeAlt:"Trocadéro",
+     placeImg:"pasted-1790327439267-0.png", placeAlt:"Trocadéro",
      address:"Place du Trocadéro et du 11 Novembre, 75116 Paris", lat:48.8616, lng:2.2886,
      price:0, currency:"EUR", status:"known", type:"פעילות",
      openingHours:"16:45-17:30 · כ-45 דקות",
@@ -597,7 +597,7 @@ const INITIAL_TRIP = {
      openingHours:"19:45-20:15",
      transport:"ירידה מהמגדל והליכה קצרה לנמל השייט.", notes:"זמן הליכה: כ-5-10 דקות."},
     {id:"a2d", date:"2026-09-30", time:"20:30", name:"Seine River Cruise",
-     placeImg:"img/pasted-1790327466852-0.jpg", placeAlt:"Seine River Cruise",
+     placeImg:"pasted-1790327466852-0.png", placeAlt:"Seine River Cruise",
      address:"Port de la Bourdonnais, 75007 Paris", lat:48.8600, lng:2.2950,
      price:null, currency:"EUR", status:"estimated", type:"פעילות",
      openingHours:"20:30-21:30 · כ-1 שעה",
@@ -612,14 +612,14 @@ const INITIAL_TRIP = {
      price:null, currency:"EUR", status:"estimated", type:"תחבורה",
      openingHours:"09:30-09:45",
      notes:"לכיוון נקודת המפגש של הסיור."},
-    {id:"o1t", placeImg:"img/pasted-1790333152182-0.jpg", placeAlt:"Notre-Dame", extraImgs:[
-       {src:"img/pasted-1790349077167-0.jpg", alt:"Centre Pompidou"},
-       {src:"img/pasted-1790349101574-0.jpg", alt:"Hôtel de Ville"},
-       {src:"img/pasted-1790349145102-0.jpg", alt:"Tour Saint-Jacques"},
-       {src:"img/pasted-1790349177823-0.jpg", alt:"Panthéon"},
-       {src:"img/pasted-1790349199390-0.jpg", alt:"Conciergerie"},
-       {src:"img/pasted-1790349228285-0.jpg", alt:"Fontaine Stravinsky"},
-       {src:"img/pasted-1790349260052-0.jpg", alt:"Fontaine Saint-Michel"}],
+    {id:"o1t", placeImg:"pasted-1790333152182-0.png", placeAlt:"Notre-Dame", extraImgs:[
+       {src:"pasted-1790349077167-0.png", alt:"Centre Pompidou"},
+       {src:"pasted-1790349101574-0.png", alt:"Hôtel de Ville"},
+       {src:"pasted-1790349145102-0.png", alt:"Tour Saint-Jacques"},
+       {src:"pasted-1790349177823-0.png", alt:"Panthéon"},
+       {src:"pasted-1790349199390-0.png", alt:"Conciergerie"},
+       {src:"pasted-1790349228285-0.png", alt:"Fontaine Stravinsky"},
+       {src:"pasted-1790349260052-0.png", alt:"Fontaine Saint-Michel"}],
      date:"2026-10-01", time:"10:30", name:"פריז הקלאסית למשפחות - אירופה הצעירה",
      address:"Place Georges-Pompidou, 75004 Paris", lat:48.8606, lng:2.3522,
      price:162, currency:"EUR", status:"known", type:"פעילות",
@@ -636,7 +636,7 @@ const INITIAL_TRIP = {
      price:null, currency:"EUR", status:"estimated", type:"תחבורה",
      transport:"Metro Line 4 → Barbès–Rochechouart → Line 2 → Anvers",
      notes:"כ-30-35 דקות כולל החלפה.\nמ-Anvers כ-8-10 דקות הליכה ל-Sacré-Cœur."},
-    {id:"o1b", placeImg:"img/pasted-1790333178131-0.jpg", placeAlt:"Sacré-Cœur", extraImgs:[{src:"img/pasted-1790333198541-0.jpg", alt:"Place du Tertre"}, {src:"img/pasted-1790333257099-0.jpg", alt:"★ Square Louise Michel"}, {src:"img/pasted-1790333272834-0.jpg", alt:"★ Wall of Love"}], date:"2026-10-01", time:"15:15", name:"Montmartre",
+    {id:"o1b", placeImg:"pasted-1790333178131-0.png", placeAlt:"Sacré-Cœur", extraImgs:[{src:"pasted-1790333198541-0.png", alt:"Place du Tertre"}, {src:"pasted-1790333257099-0.png", alt:"★ Square Louise Michel"}, {src:"pasted-1790333272834-0.png", alt:"★ Wall of Love"}], date:"2026-10-01", time:"15:15", name:"Montmartre",
      address:"35 Rue du Chevalier de la Barre, 75018 Paris", lat:48.8867, lng:2.3431,
      price:0, currency:"EUR", status:"known", type:"פעילות",
      openingHours:"15:15-18:00",
@@ -650,14 +650,14 @@ const INITIAL_TRIP = {
      price:null, currency:"EUR", status:"estimated", type:"תחבורה",
      openingHours:"19:30-20:15",
      notes:"רצף היום: סיור פריז הקלאסית → Lunch → Montmartre → ★ Playground → Dinner"},
-    {id:"a13", placeImg:"img/pasted-1790349771319-0.jpg", placeAlt:"Parc des Princes", date:"2026-10-02", time:"10:30", name:"סיור באצטדיון PSG - Parc des Princes",
+    {id:"a13", placeImg:"pasted-1790349771319-0.png", placeAlt:"Parc des Princes", date:"2026-10-02", time:"10:30", name:"סיור באצטדיון PSG - Parc des Princes",
      address:"24 Rue du Commandant Guilbaud, 75016 Paris", lat:48.8414, lng:2.2530,
      price:null, currency:"EUR", status:"estimated", type:"פעילות",
      ticketUrl:PSG_TICKETS_PDF, confirmation:"3100575",
      notes:"מספר הזמנה 3100575 · הכרטיסים באזור האישי באתר PSG.",
      freeText:"מה כן אפשר לעשות בלי כרטיס לסיור:\n\nלהגיע לאצטדיון מבחוץ, להצטלם ולראות את המעטפת.\nלהיכנס ל־PSG Megastore / חנות רשמית, כל עוד היא פתוחה באותו יום.\nלהסתובב באזור האצטדיון ולראות את שערי הכניסה והאווירה."},
     {id:"a6", date:"2026-09-30", time:"18:30", name:"Eiffel Tower – 2nd Floor",
-     placeImg:"img/pasted-1790327455348-0.jpg", placeAlt:"Eiffel Tower",
+     placeImg:"pasted-1790327455348-0.png", placeAlt:"Eiffel Tower",
      address:"5 Avenue Anatole France, 75007 Paris", lat:48.8584, lng:2.2945,
      price:53.30, currency:"EUR", status:"known", type:"פעילות",
      officialWebsite:LINKS.tourEiffel, ticketUrl:EIFFEL_TICKETS_PDF,
@@ -791,7 +791,7 @@ let map = null, markers = [];
 function load(){
   try{
     let raw = localStorage.getItem(KEY);
-    if(raw) raw = raw.replace(/uploads\/(pasted-[\w-]+)\.png/g, "img/$1.jpg");
+    if(raw) raw = raw.replace(/(?:uploads|img)\/(pasted-[\w-]+)\.(?:png|jpg)/g, "$1.png");
     if(raw){
       const t = normalize(JSON.parse(raw));
       if(!t.settings) t.settings = {};
@@ -1144,23 +1144,17 @@ function dataUriToBlobUrl(uri){
 let docUrl = null;
 function openDoc(uri, name){
   if(!uri) return;
-  const open = href => {
-    const a = document.createElement("a");
-    a.href = href; a.target = "_blank"; a.rel = "noopener";
-    document.body.appendChild(a); a.click(); a.remove();
-  };
-  if(/^data:/.test(uri)){
-    const url = dataUriToBlobUrl(uri);
-    if(url){ open(url); setTimeout(()=>URL.revokeObjectURL(url), 120000); return; }
-  }
-  fetch(uri).then(r=>{
-    if(!r.ok) throw 0;
-    return r.blob();
-  }).then(b=>{
-    const url = URL.createObjectURL(b);
-    open(url);
-    setTimeout(()=>URL.revokeObjectURL(url), 120000);
-  }).catch(()=>open(uri));
+  const v = document.getElementById("docView"), fr = document.getElementById("docFrame");
+  fr.src = "about:blank";
+  v.classList.add("on");
+  document.body.style.overflow = "hidden";
+  const show = href => { fr.src = href; };
+  if(/^data:/.test(uri)){ const u = dataUriToBlobUrl(uri); if(u){ docUrl = u; show(u); return; } }
+  let framed = false; try{ framed = window.self !== window.top; }catch(e){ framed = true; }
+  if(!framed){ show(new URL(uri, location.href).href); return; }
+  fetch(uri).then(r=>{ if(!r.ok) throw 0; return r.blob(); })
+    .then(b=>{ if(docUrl) URL.revokeObjectURL(docUrl); docUrl = URL.createObjectURL(new Blob([b], {type:"application/pdf"})); show(docUrl); })
+    .catch(()=>show(new URL(uri, location.href).href));
 }
 function closeDoc(){
   const v = document.getElementById("docView");
@@ -2243,6 +2237,7 @@ document.addEventListener("click", e=>{
 function closeImg(){
   document.getElementById("imgView").classList.remove("on");
   document.getElementById("imgBig").src = "";
+  if(window.__resetZoom) window.__resetZoom();
   document.body.style.overflow = "";
 }
 document.addEventListener("click", e=>{
@@ -2257,6 +2252,23 @@ document.addEventListener("click", e=>{
 }, true);
 document.getElementById("imgClose").addEventListener("click", closeImg);
 document.getElementById("imgView").addEventListener("click", e=>{ if(e.target.id==="imgView") closeImg(); });
+(function(){
+  const im = document.getElementById("imgBig");
+  let s=1, x=0, y=0, pts=new Map(), start=null, lastTap=0, moved=false;
+  const apply=()=>{ im.style.transform = s===1&&!x&&!y ? "" : "translate("+x+"px,"+y+"px) scale("+s+")"; im.style.cursor = s>1?"grab":"zoom-in"; };
+  const clamp=()=>{ s=Math.min(6,Math.max(1,s)); if(s===1){x=0;y=0;} else { const mx=im.offsetWidth*(s-1)/2, my=im.offsetHeight*(s-1)/2; x=Math.max(-mx,Math.min(mx,x)); y=Math.max(-my,Math.min(my,y)); } };
+  window.__resetZoom=()=>{ s=1;x=0;y=0;pts.clear();apply(); };
+  const snap=()=>{ const p=[...pts.values()]; if(p.length>=2){ const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); start={d, s, x, y, cx:(p[0].x+p[1].x)/2, cy:(p[0].y+p[1].y)/2}; } else if(p.length===1){ start={px:p[0].x, py:p[0].y, x, y}; } };
+  im.addEventListener("pointerdown", e=>{ im.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); moved=false; snap(); });
+  im.addEventListener("pointermove", e=>{ if(!pts.has(e.pointerId)) return; pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); const p=[...pts.values()];
+    if(p.length>=2 && start && start.d){ const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); s=start.s*d/start.d; x=start.x+((p[0].x+p[1].x)/2-start.cx); y=start.y+((p[0].y+p[1].y)/2-start.cy); moved=true; clamp(); apply(); }
+    else if(p.length===1 && start && s>1){ const dx=p[0].x-start.px, dy=p[0].y-start.py; if(Math.abs(dx)+Math.abs(dy)>3) moved=true; x=start.x+dx; y=start.y+dy; clamp(); apply(); } });
+  const up=e=>{ pts.delete(e.pointerId); snap();
+    if(!pts.size && !moved){ const now=Date.now(); if(now-lastTap<300){ s = s>1?1:2.5; if(s===1){x=0;y=0;} clamp(); apply(); lastTap=0; } else lastTap=now; } };
+  im.addEventListener("pointerup", up); im.addEventListener("pointercancel", up);
+  im.addEventListener("wheel", e=>{ e.preventDefault(); s*= e.deltaY<0?1.15:1/1.15; clamp(); apply(); }, {passive:false});
+  im.addEventListener("click", e=>e.stopPropagation());
+})();
 document.getElementById("docHome").addEventListener("click", closeDoc);
 document.getElementById("confirmNo").addEventListener("click", closeConfirm);
 document.getElementById("confirmBg").addEventListener("click", closeConfirm);
@@ -2691,7 +2703,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ openDrawer(false
 (function(){
   const w = document.getElementById("welcome");
   if(!w) return;
-  w.style.backgroundImage = 'url("img/pasted-1790009733245-0.jpg")';
+  w.style.backgroundImage = 'url("pasted-1790009733245-0.png")';
   const hide = ()=>{ w.classList.add("off"); setTimeout(()=>w.remove(), 800); };
   w.addEventListener("click", hide);
   setTimeout(hide, 2800);
