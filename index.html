@@ -1181,7 +1181,7 @@ function openDoc(uri, name){
       if(job!==docJob) return;
       const page = await pdf.getPage(n);
       const vp1 = page.getViewport({scale:1});
-      const vp = page.getViewport({scale: (w/vp1.width)*dpr*1.5});
+      const vp = page.getViewport({scale: Math.min(3, (w/vp1.width)*dpr*1.25)});
       const c = document.createElement("canvas");
       c.width = vp.width; c.height = vp.height;
       c.style.cssText = "display:block;width:100%;max-width:900px;height:auto;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35);flex-shrink:0";
@@ -1258,6 +1258,41 @@ function openDrawer(on){
   document.getElementById("drawerBg").classList.toggle("on", on);
 }
 
+const WX_KEY = "paris-trip-weather";
+let WX = (()=>{ try{ return JSON.parse(localStorage.getItem(WX_KEY)||"{}"); }catch(e){ return {}; } })();
+const WX_LOC = {paris:[48.8566,2.3522], disney:[48.8722,2.7758]};
+function wxText(c){
+  if(c===0) return "בהיר"; if(c<=2) return "מעונן חלקית"; if(c===3) return "מעונן";
+  if(c<=48) return "ערפל"; if(c<=57) return "טפטוף"; if(c<=67) return "גשם";
+  if(c<=77) return "שלג"; if(c<=82) return "ממטרים"; if(c<=86) return "שלג"; return "סופות רעמים";
+}
+function wxLocFor(d){ return (trip.activities||[]).some(a=>a.date===d && /disney/i.test(a.name||"")) ? "disney" : "paris"; }
+function wxIcon(c){
+  if(c===0) return "☀️"; if(c===1) return "🌤️"; if(c===2) return "⛅"; if(c===3) return "☁️";
+  if(c<=48) return "🌫️"; if(c<=57) return "🌦️"; if(c<=67) return "🌧️"; if(c<=77) return "🌨️";
+  if(c<=82) return "🌦️"; if(c<=86) return "🌨️"; return "⛈️";
+}
+function weatherIconFor(d){ const r = WX[wxLocFor(d)]; const day = r && r.days && r.days[d]; return day ? wxIcon(day.c) : ""; }
+function weatherFor(d){
+  const r = WX[wxLocFor(d)]; const day = r && r.days && r.days[d];
+  if(!day) return "";
+  return wxText(day.c)+" \u2066"+Math.round(day.hi)+"°/"+Math.round(day.lo)+"°\u2069"+(day.p!=null?" · גשם "+day.p+"%":"");
+}
+function fetchWeather(){
+  const fresh = k => WX[k] && Date.now()-WX[k].t < 3*3600*1000;
+  Object.entries(WX_LOC).forEach(([k,[lat,lng]])=>{
+    if(fresh(k)) return;
+    fetch("https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lng+"&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FParis&forecast_days=16")
+      .then(r=>r.json()).then(j=>{
+        const days = {}; const D = j.daily||{};
+        (D.time||[]).forEach((t,i)=>{ days[t] = {c:D.weather_code[i], hi:D.temperature_2m_max[i], lo:D.temperature_2m_min[i], p:D.precipitation_probability_max?D.precipitation_probability_max[i]:null}; });
+        WX[k] = {t:Date.now(), days};
+        try{ localStorage.setItem(WX_KEY, JSON.stringify(WX)); }catch(e){}
+        if(tab==="itinerary") render(); else renderHeader();
+      }).catch(()=>{});
+  });
+}
+setTimeout(fetchWeather, 300);
 function renderHeader(){
   const ds = allDates();
   const d = selDate && ds.includes(selDate) ? selDate : (ds[0]||"");
@@ -1265,7 +1300,9 @@ function renderHeader(){
   let sub = names[tab] || "";
   if(tab==="itinerary"){
     sub += d ? " · "+heDate(d) : " · אין עדיין תאריכים";
-    if(trip.settings.weather) sub += " · " + trip.settings.weather + " (ידני)";
+    const wx = d ? weatherFor(d) : "";
+    if(wx) sub += " · " + wx;
+    else if(trip.settings.weather) sub += " · " + trip.settings.weather + " (ידני)";
   }
   document.getElementById("headerSub").textContent = sub;
   const ut = document.getElementById("updText");
@@ -1334,8 +1371,14 @@ function viewItinerary(){
 
   return '<div><div class="stickytop">'+days+'</div><div>'+
     '<div style="padding:2px 2px 0">'+
-      '<div style="font-size:19px;font-weight:600;letter-spacing:-.2px">'+
+      '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px">'+
+        '<div style="font-size:19px;font-weight:600;letter-spacing:-.2px">'+
         (selDate==="2026-10-05" ? "✨ יום הולדת לעידודי ✨" : "המסלול של היום")+'</div>'+
+        (weatherFor(selDate) ? '<span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#1a1a1a">'+
+          '<span style="font-size:18px;line-height:1">'+weatherIconFor(selDate)+'</span>'+
+          esc(weatherFor(selDate))+'</span>'
+          : '<span class="tiny">תחזית: עדיין לא זמינה</span>')+
+      '</div>'+
       '<div class="tiny" style="margin-top:3px">'+items.length+' פריטים</div>'+
     '</div>'+
     '<div style="margin-top:10px">'+list+'</div>'+
@@ -1388,8 +1431,8 @@ function itemHtml(i, idx){
   const q = [];
   const rec = i.rec;
   if(rec.ticketUrl) q.push(/^data:|\.pdf($|\?)/i.test(rec.ticketUrl)
-    ? '<span class="edit-item" data-pdfitem="'+esc(rec.id)+'">כרטיסים</span>'
-    : '<a class="edit-item" href="'+esc(rec.ticketUrl)+'" target="_blank" rel="noopener">כרטיסים</a>');
+    ? '<span class="edit-item" data-pdfitem="'+esc(rec.id)+'" style="color:#2F6FD6;font-weight:600">כרטיסים</span>'
+    : '<a class="edit-item" href="'+esc(rec.ticketUrl)+'" target="_blank" rel="noopener" style="color:#2F6FD6;font-weight:600">כרטיסים</a>');
   if(rec.officialWebsite||rec.website) q.push('<a class="edit-item" href="'+esc(rec.officialWebsite||rec.website)+'" target="_blank" rel="noopener">אתר רשמי</a>');
 
   return '<div class="item'+(selItem===idx?" on":"")+'" data-item="'+idx+'">'+
@@ -1398,9 +1441,13 @@ function itemHtml(i, idx){
          :'<div class="pin num nomap">'+i.num+'</div>')+
     '<div class="b">'+
       '<div class="name"'+((rec.type==="תחבורה"||i.kind==="transport")?' style="display:flex;align-items:center;gap:7px;color:var(--accent)"':'')+'>'+
-        ((rec.type==="תחבורה"||i.kind==="transport")?'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true">'+
+        ((rec.type==="תחבורה"||i.kind==="transport")&&/שייט/.test(i.name||"")?'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-3px;margin-inline-end:6px" aria-hidden="true"><path d="M3 14h18l-2.5 4.5a2 2 0 01-1.75 1H7.25a2 2 0 01-1.75-1z"/><path d="M6 14V10h12v4"/><path d="M9 10V6h5v4"/><path d="M11.5 6V3.5"/></svg>':(rec.type==="תחבורה"||i.kind==="transport")?'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true">'+
           '<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14"/><path d="M12 3v8"/><circle cx="8.5" cy="14" r=".6" fill="var(--accent)"/><circle cx="15.5" cy="14" r=".6" fill="var(--accent)"/><path d="M8 17l-2 4M16 17l2 4"/></svg>':'')+
-        '<span>'+esc(i.name)+'</span></div>'+
+        (((rec.type!=="תחבורה"&&i.kind!=="transport")&&(/שייט/.test(i.name||"")||/^ארוחת (צהריים|ערב)/.test(i.name||"")))
+          ? (/שייט/.test(i.name)
+            ? '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-3px;margin-inline-end:6px" aria-hidden="true"><path d="M3 14h18l-2.5 4.5a2 2 0 01-1.75 1H7.25a2 2 0 01-1.75-1z"/><path d="M6 14V10h12v4"/><path d="M9 10V6h5v4"/><path d="M11.5 6V3.5"/></svg>'
+            : '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-3px;margin-inline-end:6px" aria-hidden="true"><path d="M7 3v8"/><path d="M4.5 3v5a2.5 2.5 0 005 0V3"/><path d="M7 11v10"/><path d="M17 21V3c-2 1.5-3 4-3 7v4h3"/></svg>') : '')+
+        '<span>'+esc(i.name).replace(/Tootbus|PSG|אירופה הצעירה|Aqua Mundo|Disney|Eiffel Tower|Val d&#39;Europe|Val d'Europe|Seine River Cruise|Cruise/g,m=>'<span style="color:#2F6FD6">'+m+'</span>')+'</span></div>'+
       (i.detail?'<div class="small num" style="color:var(--accent);text-align:right">'+esc(i.detail)+'</div>':'')+
       (i.kind!=="activity"?'<div><span class="kind">'+(i.kind==="hotel"?"מלון":"תחבורה")+'</span></div>':'')+
       (i.address?'<div class="small ltr" style="color:var(--gray2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right">'+esc(i.address)+'</div>':'')+
@@ -2089,8 +2136,8 @@ function openForm(type, id){
     const addr = rec.address || rec.name || "";
     if(addr) q.push('<a href="'+mapsUrl(addr)+'" target="_blank" rel="noopener">פתיחה במפה</a>');
     if(rec.ticketUrl) q.push(/^data:|\.pdf($|\?)/i.test(rec.ticketUrl)
-    ? '<span data-pdfitem="'+esc(rec.id)+'">כרטיסים</span>'
-    : '<a href="'+esc(rec.ticketUrl)+'" target="_blank" rel="noopener">כרטיסים</a>');
+    ? '<span data-pdfitem="'+esc(rec.id)+'" style="color:#2F6FD6;font-weight:600">כרטיסים</span>'
+    : '<a href="'+esc(rec.ticketUrl)+'" target="_blank" rel="noopener" style="color:#2F6FD6;font-weight:600">כרטיסים</a>');
     if(rec.officialWebsite||rec.website) q.push('<a href="'+esc(rec.officialWebsite||rec.website)+'" target="_blank" rel="noopener">אתר רשמי</a>');
     if(rec.appUrl) q.push('<a href="'+esc(rec.appUrl)+'" target="_blank" rel="noopener">אפליקציה</a>');
     if(rec.bookingUrl) q.push('<a href="'+esc(rec.bookingUrl)+'" target="_blank" rel="noopener">ההזמנה</a>');
@@ -2309,6 +2356,22 @@ document.getElementById("imgView").addEventListener("click", e=>{ if(e.target.id
   im.addEventListener("click", e=>e.stopPropagation());
 })();
 document.getElementById("docHome").addEventListener("click", closeDoc);
+(function(){
+  const box = document.getElementById("docPages");
+  box.style.touchAction = "pan-x pan-y";
+  let d0=0, z0=1, mid=null;
+  const dist = t => Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+  box.addEventListener("touchstart", e=>{ if(e.touches.length===2){ d0=dist(e.touches); z0=docZoom;
+    const r=box.getBoundingClientRect(); const mx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left, my=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;
+    mid={mx,my,cx:(box.scrollLeft+mx)/box.scrollWidth, cy:(box.scrollTop+my)/box.scrollHeight}; } }, {passive:true});
+  box.addEventListener("touchmove", e=>{ if(e.touches.length!==2||!d0) return; e.preventDefault();
+    docZoom = Math.max(1, Math.min(4, z0*dist(e.touches)/d0)); applyDocZoom();
+    box.scrollLeft = mid.cx*box.scrollWidth - mid.mx; box.scrollTop = mid.cy*box.scrollHeight - mid.my; }, {passive:false});
+  box.addEventListener("touchend", e=>{ if(e.touches.length<2) d0=0; });
+  let lastTap=0;
+  box.addEventListener("touchend", e=>{ if(e.touches.length||e.changedTouches.length!==1) return; const now=Date.now();
+    if(now-lastTap<280){ docZoom = docZoom>1?1:2; applyDocZoom(); lastTap=0; } else lastTap=now; });
+})();
 document.getElementById("docZoomIn").addEventListener("click", ()=>{ docZoom=Math.min(3, docZoom+0.5); applyDocZoom(); });
 document.getElementById("docZoomOut").addEventListener("click", ()=>{ docZoom=Math.max(1, docZoom-0.5); applyDocZoom(); });
 document.getElementById("confirmNo").addEventListener("click", closeConfirm);
